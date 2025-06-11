@@ -1,0 +1,18 @@
+[project]
+name = "mitm-client"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gradio>=5.33.1",
+    "mitmproxy>=12.1.1",
+    "pydantic>=2.11.5",
+    "ruff>=0.11.13",
+]
+
+[tool.ruff]
+extend-ignore = [
+    "E402", # module level import not at top of file
+]
+extend-select = ["I"]
