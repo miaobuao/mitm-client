@@ -1,0 +1,15 @@
+{
+  "recorder": {
+    "match": [
+      ".*bilibili\\.com.*",
+      ".*weibo\\.cn.*",
+      ".*xiaohongshu\\.com.*",
+      ".*zhihu\\.com.*",
+      ".*douban\\.com.*",
+      ".*sspai\\.com.*",
+      ".*36kr\\.com.*",
+      ".*smzdm\\.com.*"
+    ],
+    "writing_mode": "ab"
+  }
+}
