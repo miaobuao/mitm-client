@@ -1,3 +1,4 @@
+import webbrowser
 from pathlib import Path
 
 import gradio as gr
@@ -49,6 +50,13 @@ def create_ui(
                 lines=10,
                 autoscroll=True,
             )
+
+        with gr.Row():
+            install_cert_button = gr.Button("Install Cert")
+
+        @install_cert_button.click()
+        def click_install_cert_button():
+            webbrowser.open("http://mitm.it/")
 
         @record_btn.click(
             inputs=[filename_input],
