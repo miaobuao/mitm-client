@@ -14,7 +14,11 @@ class MitmProxyRunner:
 
     def run_mitmproxy(self):
         async def run():
-            opts = Options(listen_host="0.0.0.0", listen_port=8080)
+            opts = Options(
+                listen_host="0.0.0.0",
+                listen_port=8080,
+                http2=False,
+            )
             self.master = DumpMaster(opts)
             self.master.addons.add(*self.addons)
             await self.master.run()

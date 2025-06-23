@@ -13,24 +13,20 @@ logger = logging.getLogger("mitmproxy-client")
 class RecorderAddon:
     def __init__(self, config: RecorderConfig):
         self.is_recording = False
-        self.flow_writer = None
-        self.file_handle = None
-        self.filename = None
+        self.output_dir = None
         self.config = config
+        self._writers: dict[str, FlowWriter] = {}
 
-    def start_recording(self, filename: str):
+    def start_recording(self, output_dir: str):
         if self.is_recording:
-            logger.warning(f"Already recording to {self.filename}")
+            logger.warning(f"Already recording to {self.output_dir}")
             return
 
-        self.filename = filename
+        self.output_dir = output_dir
         try:
-            if os.path.dirname(filename):
-                os.makedirs(os.path.dirname(filename), exist_ok=True)
-            self.file_handle = open(self.filename, self.config.writing_mode)
-            self.flow_writer = FlowWriter(self.file_handle)
+            os.makedirs(self.output_dir, exist_ok=True)
             self.is_recording = True
-            logger.info(f"Starting recording to {self.filename}")
+            logger.info(f"Starting recording to {self.output_dir}")
         except IOError as e:
             logger.error(f"Error starting recording: {e}")
 
@@ -40,19 +36,29 @@ class RecorderAddon:
             return
 
         self.is_recording = False
-        if self.file_handle:
-            self.file_handle.close()
-            self.file_handle = None
-        self.flow_writer = None
-        logger.info(f"Stopped recording to {self.filename}")
+        for writer in self._writers.values():
+            writer.fo.close()
+        self._writers.clear()
+        logger.info(f"Stopped recording to {self.output_dir}")
+        self.output_dir = None
 
     def response(self, flow: http.HTTPFlow):
-        if not self.is_recording or not self.flow_writer:
+        if not self.is_recording or not self.output_dir:
             return
 
         if (not self.config.match) or any(
             pattern.match(flow.request.url)
             for pattern in map(re.compile, self.config.match)
         ):
-            self.flow_writer.add(flow)
-            return
+            host = flow.request.host
+            if writer := self._writers.get(host):
+                writer.add(flow)
+                return
+            try:
+                filename = os.path.join(self.output_dir, f"{host}.mitm")
+                f = open(filename, "ab")
+                writer = FlowWriter(f)
+                self._writers[host] = writer
+                writer.add(flow)
+            except IOError as e:
+                logger.error(f"Error writing flow to {filename}: {e}")

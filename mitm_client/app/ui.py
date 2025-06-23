@@ -4,13 +4,15 @@ from pathlib import Path
 import gradio as gr
 
 from mitm_client.addons import RecorderAddon, ServerSideReplayAddon
+from mitm_client.app.deduplicate_flows import deduplicate_flows
 from mitm_client.app.logging_config import ActionLogHandler
 from mitm_client.i18n import i18n
 
 MITM_OUTPUT_DIR = Path("./.mitm")
 MITM_OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
 
-MITM_OUTPUT_FILE_PATH = MITM_OUTPUT_DIR.joinpath("traffic.mitm")
+FLOWS_OUTPUT_DIR = MITM_OUTPUT_DIR.joinpath("flows")
+FLOWS_OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
 
 
 def create_ui(
@@ -34,13 +36,14 @@ def create_ui(
         gr.Markdown(f"# {i18n('app_title')}")
 
         with gr.Row():
-            filename_input = gr.Textbox(
-                label=i18n("filename_label"),
-                value=MITM_OUTPUT_FILE_PATH.as_posix(),
+            output_dir_input = gr.Textbox(
+                label=i18n("output_dir_label"),
+                value=FLOWS_OUTPUT_DIR.as_posix(),
             )
 
         with gr.Row():
             record_btn = gr.Button(*_update_record_button())
+            deduplicate_btn = gr.Button(i18n("deduplicate"))
             replay_btn = gr.Button(*_update_replay_button())
 
         with gr.Row():
@@ -59,28 +62,35 @@ def create_ui(
             webbrowser.open("http://mitm.it/")
 
         @record_btn.click(
-            inputs=[filename_input],
+            inputs=[output_dir_input],
             outputs=[record_btn],
         )
-        def toggle_recording(filename: str):
+        def toggle_recording(output_dir: str):
             if recorder.is_recording:
                 recorder.stop_recording()
             else:
-                fpath = Path(filename).absolute().as_posix()
+                fpath = Path(output_dir).absolute().as_posix()
                 recorder.start_recording(fpath)
             return _update_record_button()
 
         @replay_btn.click(
-            inputs=[filename_input],
+            inputs=[output_dir_input],
             outputs=[replay_btn],
         )
-        def toggle_replaying(filename: str):
+        def toggle_replaying(output_dir: str):
             if replay.is_replaying:
                 replay.stop_replaying()
             else:
-                fpath = Path(filename).absolute().as_posix()
+                fpath = Path(output_dir).absolute().as_posix()
                 replay.start_replaying(fpath)
             return _update_replay_button()
+
+        @deduplicate_btn.click(
+            inputs=[output_dir_input],
+        )
+        def handle_deduplicate(output_dir: str):
+            deduplicate_flows(output_dir)
+            return gr.update()
 
         timer = gr.Timer(0.5)
         last_logs_str = ""

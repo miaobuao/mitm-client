@@ -15,16 +15,24 @@ class ServerSideReplayAddon:
         self._cache: dict[Tuple[str, str], http.HTTPFlow] = {}
         self._file_metadata: dict[str, Tuple[float, int]] = {}
 
-    def start_replaying(self, filename: str):
+    def start_replaying(self, path: str):
         if self.is_replaying:
             logger.warning("Already replaying.")
             return
-        if not os.path.exists(filename):
-            logger.error(f"File not found: {filename}")
+        if not os.path.exists(path):
+            logger.error(f"Path not found: {path}")
             return
-        self.server_replay_files.add(filename)
+
+        if os.path.isdir(path):
+            for root, _, files in os.walk(path):
+                for file in files:
+                    if file.endswith(".mitm"):
+                        self.server_replay_files.add(os.path.join(root, file))
+        elif os.path.isfile(path):
+            self.server_replay_files.add(path)
+
         self.is_replaying = True
-        logger.info(f"Replaying flows from {filename}")
+        logger.info(f"Replaying flows from {path}")
 
     def stop_replaying(self):
         if not self.is_replaying:

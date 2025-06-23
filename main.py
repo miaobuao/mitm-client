@@ -9,7 +9,7 @@ from mitm_client.i18n import i18n
 
 
 def main():
-    app_config = load_config(Path("config.json"))
+    app_config = load_config(Path("config.json5"))
     log_handler = setup_logging()
     recorder = RecorderAddon(app_config.recorder)
     replay = ServerSideReplayAddon()
