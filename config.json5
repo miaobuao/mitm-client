@@ -1,6 +1,0 @@
-{
-  recorder: {
-    match: [],
-    writing_mode: "ab",
-  },
-}
