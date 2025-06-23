@@ -1,15 +1,19 @@
 import logging
 import os
+import re
 from typing import Set, Tuple
 
 from mitmproxy import http
 from mitmproxy.io import FlowReader
 
+from mitm_client.config import ReplayConfig
+
 logger = logging.getLogger("mitmproxy-client")
 
 
 class ServerSideReplayAddon:
-    def __init__(self):
+    def __init__(self, config: ReplayConfig):
+        self.config = config
         self.is_replaying = False
         self.server_replay_files: Set[str] = set()
         self._cache: dict[Tuple[str, str], http.HTTPFlow] = {}
@@ -77,7 +81,10 @@ class ServerSideReplayAddon:
                 logger.error(f"Error processing replay file {filename}: {e}")
 
     def response(self, flow: http.HTTPFlow):
-        if not self.is_replaying:
+        if (not self.is_replaying) or any(
+            pattern.match(flow.request.url)
+            for pattern in map(re.compile, self.config.passthrough_rules)
+        ):
             return
         self._update_cache_if_needed()
         key = (flow.request.method, flow.request.url)

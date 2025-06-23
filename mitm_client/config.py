@@ -13,8 +13,13 @@ class RecorderConfig(BaseModel):
     writing_mode: Literal["wb", "ab"] = "wb"
 
 
+class ReplayConfig(BaseModel):
+    passthrough_rules: list[str] = Field(default_factory=list)
+
+
 class AppConfig(BaseModel):
     recorder: RecorderConfig = Field(default_factory=RecorderConfig)
+    replay: ReplayConfig = Field(default_factory=ReplayConfig)
 
 
 def load_config(config_path: Path) -> AppConfig:

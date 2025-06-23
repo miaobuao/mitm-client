@@ -12,7 +12,7 @@ def main():
     app_config = load_config(Path("config.json5"))
     log_handler = setup_logging()
     recorder = RecorderAddon(app_config.recorder)
-    replay = ServerSideReplayAddon()
+    replay = ServerSideReplayAddon(app_config.replay)
     proxy_runner = MitmProxyRunner(recorder, replay)
     proxy_runner.start()
 
